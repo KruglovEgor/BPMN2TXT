@@ -26,3 +26,7 @@ venv/
 *.bpmn
 services/pipeline/tmp/*
 !services/pipeline/tmp/.gitkeep
+
+# UI
+ui/package-lock.json
+ui/node_modules/
