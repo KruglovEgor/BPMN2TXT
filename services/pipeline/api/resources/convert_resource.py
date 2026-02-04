@@ -1,18 +1,22 @@
 import time
 import asyncio
 import os
-from pathlib import Path
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import UploadFile, File
 from starlette.responses import PlainTextResponse, JSONResponse
 from bpmn.element_factories import DiagramFactory
 from api.services import (
     predict_service as ps,
-    ocr_service as os,
+    ocr_service as ocr,
     convert_service as cs,
     storage_service as ss,
 )
 from commons.utils import sample_bpmn, here
+
+# Настройка логгера
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 # Thread pool для параллельного выполнения моделей
 executor = ThreadPoolExecutor(max_workers=3)
@@ -48,9 +52,9 @@ async def convert_image(image: UploadFile = File(...)):
 
         safe_filename = f"{int(time.time_ns())}.{file_ext}"
         path = here(f"../../tmp/{safe_filename}")
-        
+
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        
+
         with open(path, 'wb+') as disk_file:
             disk_file.write(await image.read())
         ocr_img, predict_img = ss.get_ocr_and_predict_images(path)
@@ -68,7 +72,7 @@ async def convert_image(image: UploadFile = File(...)):
             executor, ps.predict_keypoint, ocr_img
         )
         text_future = loop.run_in_executor(
-            executor, os.get_text_from_img, ocr_img
+            executor, ocr.get_text_from_img, ocr_img
         )
 
         # Ожидаем завершения всех моделей
@@ -83,7 +87,7 @@ async def convert_image(image: UploadFile = File(...)):
         flows = cs.convert_keypoint_prediction(kp_predictions)
         cs.link_flows(flows, elements)
         elements.extend(flows)
-        os.link_text(text, elements)
+        ocr.link_text(text, elements)
 
         bpmn_diagram = DiagramFactory.create_element(elements)
         rendered_bpmn_model = cs.render_diagram(bpmn_diagram)
