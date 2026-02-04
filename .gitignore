@@ -1,0 +1,25 @@
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+venv/
+.venv/
+
+# BPMN / generated
+*.png
+*.jpg
+*.jpeg
+*.bpmn
+services/pipeline/temp_files/*
+!services/pipeline/temp_files/.gitkeep
