@@ -1,4 +1,5 @@
 from typing import List
+import warnings
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
@@ -12,6 +13,18 @@ from bpmn.predictions import (
 )
 
 from commons.utils import here
+
+# Detectron2 v0.6 + torch 1.10 печатают предупреждения о будущих изменениях API
+warnings.filterwarnings(
+    "ignore",
+    message=r"__floordiv__ is deprecated.*",
+    category=UserWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=r"torch\.meshgrid: in an upcoming release.*",
+    category=UserWarning,
+)
 
 
 class ObjectPredictor:

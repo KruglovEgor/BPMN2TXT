@@ -1,6 +1,7 @@
 import time
-import os
-from fastapi import UploadFile, File, Form
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from fastapi import UploadFile, File
 from starlette.responses import PlainTextResponse, JSONResponse
 from bpmn.element_factories import DiagramFactory
 from api.services import (
@@ -11,17 +12,17 @@ from api.services import (
 )
 from commons.utils import sample_bpmn, here
 
+# Thread pool для параллельного выполнения моделей
+executor = ThreadPoolExecutor(max_workers=3)
 
-async def convert_image(
-    image: UploadFile = File(...),
-    elements: bool = Form(False),
-    flows: bool = Form(False),
-    ocr: bool = Form(False),
-):
-    """Обрабатывает POST-запрос на конвертацию изображения в BPMN-модель."""
+
+async def convert_image(image: UploadFile = File(...)):
+    """Обрабатывает POST-запрос на конвертацию изображения в BPMN-модель.
+    
+    Пайплайн выполняется с параллельным запуском всех моделей.
+    """
 
     try:
-        # Валидация имени файла
         if image is None or not image.filename:
             return JSONResponse(
                 content={"error": "Имя файла отсутствует"},
@@ -37,24 +38,35 @@ async def convert_image(
         if ocr_img is None or predict_img is None:
             return PlainTextResponse(content=sample_bpmn, status_code=200)
 
-        if elements:
-            obj_predictions = ps.predict_object(predict_img)
-            elements = cs.convert_object_predictions(obj_predictions)
-
-            if flows:
-                kp_predictions = ps.predict_keypoint(ocr_img)
-                flows = cs.convert_keypoint_prediction(kp_predictions)
-                cs.link_flows(flows, elements)
-                elements.extend(flows)
-
-            if ocr:
-                text = os.get_text_from_img(ocr_img)
-                os.link_text(text, elements)
-
-            bpmn_diagram = DiagramFactory.create_element(elements)
-            rendered_bpmn_model = cs.render_diagram(bpmn_diagram)
-        else:
-            rendered_bpmn_model = sample_bpmn
+        # Параллельный запуск всех моделей
+        loop = asyncio.get_event_loop()
+        
+        obj_predictions_future = loop.run_in_executor(
+            executor, ps.predict_object, predict_img
+        )
+        kp_predictions_future = loop.run_in_executor(
+            executor, ps.predict_keypoint, ocr_img
+        )
+        text_future = loop.run_in_executor(
+            executor, os.get_text_from_img, ocr_img
+        )
+        
+        # Ожидаем завершения всех моделей
+        obj_predictions, kp_predictions, text = await asyncio.gather(
+            obj_predictions_future,
+            kp_predictions_future,
+            text_future
+        )
+        
+        # Последовательная обработка результатов
+        elements = cs.convert_object_predictions(obj_predictions)
+        flows = cs.convert_keypoint_prediction(kp_predictions)
+        cs.link_flows(flows, elements)
+        elements.extend(flows)
+        os.link_text(text, elements)
+        
+        bpmn_diagram = DiagramFactory.create_element(elements)
+        rendered_bpmn_model = cs.render_diagram(bpmn_diagram)
 
         return PlainTextResponse(content=rendered_bpmn_model, status_code=200)
 
