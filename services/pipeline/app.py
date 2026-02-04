@@ -1,27 +1,31 @@
+from commons.utils import here
+from api.resources.convert_resource import convert_image
+from fastapi.responses import PlainTextResponse
+from starlette.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
+import uvicorn
+import os
 import sys
 sys.path.append('.')
-import os
-import uvicorn
-from starlette.applications import Starlette
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
-from starlette.routing import Route
-from starlette.staticfiles import StaticFiles
-from api.resources.convert_resource import convert_image
-from commons.utils import here
 
 
 def create_app():
-    debug = os.environ.get("BACKEND_MODE", "development").lower() == "development"
-    app = Starlette(
-        debug=debug,
-        routes=[
-            Route('/api/v1/convert', convert_image, methods=['POST']),
-        ],
-        middleware=[
-            Middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'])
-        ]
+    app = FastAPI(debug=False)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_methods=['*'],
+        allow_headers=['*']
     )
+
+    app.post(
+        '/api/v1/convert',
+        summary='Конвертация изображения в BPMN',
+        description='Принимает изображение и возвращает BPMN в формате XML.',
+        response_class=PlainTextResponse
+    )(convert_image)
 
     static_files_folder = here("static")
     if os.path.exists(static_files_folder) and os.path.isdir(static_files_folder):
@@ -31,4 +35,5 @@ def create_app():
 
 
 if __name__ == "__main__":
-    uvicorn.run(create_app(), host='0.0.0.0', port=int(os.environ.get("BACKEND_PORT", "5000")))
+    uvicorn.run(create_app(), host='0.0.0.0', port=int(
+        os.environ.get("BACKEND_PORT", "5000")))

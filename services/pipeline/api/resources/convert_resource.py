@@ -1,6 +1,6 @@
 import time
 import os
-from starlette.requests import Request
+from fastapi import UploadFile, File, Form
 from starlette.responses import PlainTextResponse, JSONResponse
 from bpmn.element_factories import DiagramFactory
 from api.services import (
@@ -12,47 +12,42 @@ from api.services import (
 from commons.utils import sample_bpmn, here
 
 
-async def convert_image(request: Request):
+async def convert_image(
+    image: UploadFile = File(...),
+    elements: bool = Form(False),
+    flows: bool = Form(False),
+    ocr: bool = Form(False),
+):
     """Обрабатывает POST-запрос на конвертацию изображения в BPMN-модель."""
 
     try:
-        form = await request.form()
-        file = form.get('image')
-
-        # Валидация наличия файла
-        if file is None:
-            return JSONResponse(
-                content={"error": "Файл 'image' не найден в запросе"},
-                status_code=400
-            )
-
         # Валидация имени файла
-        if not file.filename:
+        if image is None or not image.filename:
             return JSONResponse(
                 content={"error": "Имя файла отсутствует"},
                 status_code=400
             )
 
         t = int(time.time_ns())
-        path = here("../../temp_files/img_{}_{}".format(t, file.filename))
+        path = here("../../temp_files/img_{}_{}".format(t, image.filename))
         with open(path, 'wb+') as disk_file:
-            disk_file.write(await file.read())
+            disk_file.write(await image.read())
         ocr_img, predict_img = ss.get_ocr_and_predict_images(path)
 
         if ocr_img is None or predict_img is None:
             return PlainTextResponse(content=sample_bpmn, status_code=200)
 
-        if "elements" in form and form["elements"] == 'true':
+        if elements:
             obj_predictions = ps.predict_object(predict_img)
             elements = cs.convert_object_predictions(obj_predictions)
 
-            if "flows" in form and form["flows"] == 'true':
+            if flows:
                 kp_predictions = ps.predict_keypoint(ocr_img)
                 flows = cs.convert_keypoint_prediction(kp_predictions)
                 cs.link_flows(flows, elements)
                 elements.extend(flows)
 
-            if "ocr" in form and form["ocr"] == 'true':
+            if ocr:
                 text = os.get_text_from_img(ocr_img)
                 os.link_text(text, elements)
 
