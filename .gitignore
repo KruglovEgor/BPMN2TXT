@@ -27,3 +27,4 @@ services/pipeline/temp_files/*
 # Detectron models
 services/pipeline/detectron_model/*
 !services/pipeline/detectron_model/.gitkeep
+!services/pipeline/detectron_model/*.pth
