@@ -1,5 +1,7 @@
 import time
 import asyncio
+import os
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import UploadFile, File
 from starlette.responses import PlainTextResponse, JSONResponse
@@ -15,10 +17,14 @@ from commons.utils import sample_bpmn, here
 # Thread pool для параллельного выполнения моделей
 executor = ThreadPoolExecutor(max_workers=3)
 
+# Допустимые форматы изображений
+ALLOWED_EXTENSIONS = {'.png', '.jpg',
+                      '.jpeg', '.bmp', '.tiff', '.tif', '.webp'}
+
 
 async def convert_image(image: UploadFile = File(...)):
     """Обрабатывает POST-запрос на конвертацию изображения в BPMN-модель.
-    
+
     Пайплайн выполняется с параллельным запуском всех моделей.
     """
 
@@ -29,8 +35,22 @@ async def convert_image(image: UploadFile = File(...)):
                 status_code=400
             )
 
-        t = int(time.time_ns())
-        path = here("../../temp_files/img_{}_{}".format(t, image.filename))
+        # Валидация формата файла
+        file_ext = image.filename.lower().split(
+            '.')[-1] if '.' in image.filename else ''
+        if f'.{file_ext}' not in ALLOWED_EXTENSIONS:
+            return JSONResponse(
+                content={
+                    "error": f"Недопустимый формат файла. Разрешены: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+                },
+                status_code=400
+            )
+
+        safe_filename = f"{int(time.time_ns())}.{file_ext}"
+        path = here(f"../../tmp/{safe_filename}")
+        
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        
         with open(path, 'wb+') as disk_file:
             disk_file.write(await image.read())
         ocr_img, predict_img = ss.get_ocr_and_predict_images(path)
@@ -40,7 +60,7 @@ async def convert_image(image: UploadFile = File(...)):
 
         # Параллельный запуск всех моделей
         loop = asyncio.get_event_loop()
-        
+
         obj_predictions_future = loop.run_in_executor(
             executor, ps.predict_object, predict_img
         )
@@ -50,21 +70,21 @@ async def convert_image(image: UploadFile = File(...)):
         text_future = loop.run_in_executor(
             executor, os.get_text_from_img, ocr_img
         )
-        
+
         # Ожидаем завершения всех моделей
         obj_predictions, kp_predictions, text = await asyncio.gather(
             obj_predictions_future,
             kp_predictions_future,
             text_future
         )
-        
+
         # Последовательная обработка результатов
         elements = cs.convert_object_predictions(obj_predictions)
         flows = cs.convert_keypoint_prediction(kp_predictions)
         cs.link_flows(flows, elements)
         elements.extend(flows)
         os.link_text(text, elements)
-        
+
         bpmn_diagram = DiagramFactory.create_element(elements)
         rendered_bpmn_model = cs.render_diagram(bpmn_diagram)
 
