@@ -2,22 +2,8 @@ from typing import List
 
 
 class ObjectPrediction:
-    """Представляет предсказание детекции объектов, сделанное моделью.
-    Содержит информацию о предсказанной области и её положении.
+    """Предсказание детекции объекта: метка и координаты bounding box."""
 
-    Параметры
-    ----------
-    predicted_label : int
-        Предсказанная метка области.
-    top_left_x : float
-        Координата x верхнего левого угла.
-    top_left_y : float
-        Координата y верхнего левого угла.
-    bottom_right_x : float
-        Координата x нижнего правого угла.
-    bottom_right_y : float
-        Координата y нижнего правого угла.
-    """
     def __init__(
         self,
         predicted_label: int,
@@ -37,7 +23,7 @@ class ObjectPrediction:
         self.calculate_box()
 
     def calculate_box(self):
-        """Вычисляет дополнительную информацию об области: ширину, высоту и центр. """
+        """Вычисляет ширину, высоту и центр области."""
         self.width = abs(self.bottom_right_x - self.top_left_x)
         self.height = abs(self.bottom_right_y - self.top_left_y)
         self.center = (
@@ -46,7 +32,7 @@ class ObjectPrediction:
         )
 
     def get_box_coordinates(self) -> List[float]:
-        """Возвращает координаты области в виде списка. """
+        """Возвращает координаты [x1, y1, x2, y2]."""
         return [
             self.top_left_x,
             self.top_left_y,
@@ -56,26 +42,8 @@ class ObjectPrediction:
 
 
 class KeyPointPrediction:
-    """Представляет предсказание детекции ключевых точек, сделанное моделью для распознавания потоков.
-    Содержит информацию о предсказанной области, её положении и ключевых точках.
+    """Предсказание детекции потока (стрелки): метка, bounding box и ключевые точки (head/tail)."""
 
-    Параметры
-    ----------
-    predicted_label : int
-        Предсказанная метка области.
-    top_left_x : float
-        Координата x верхнего левого угла.
-    top_left_y : float
-        Координата y верхнего левого угла.
-    bottom_right_x : float
-        Координата x нижнего правого угла.
-    bottom_right_y : float
-        Координата y нижнего правого угла.
-    head : list of float
-        Координаты головы потока.
-    tail : list of float
-        Координаты хвоста потока.
-    """
     def __init__(
         self,
         predicted_label: int,
@@ -102,21 +70,8 @@ class KeyPointPrediction:
 
 
 class Text:
-    """Представляет текст, распознанный с помощью OCR.
+    """Текст, распознанный OCR: строка и координаты."""
 
-    Параметры
-    ----------
-    text : str
-        Текстовая строка, распознанная OCR.
-    x : float
-        Координата x верхнего левого угла.
-    y : float
-        Координата y верхнего левого угла.
-    width : float
-        Ширина области, содержащей текст.
-    height : float
-        Высота области, содержащей текст.
-    """
     def __init__(self, text, x, y, width, height):
         self.text = text
         self.x = x

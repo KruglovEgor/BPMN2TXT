@@ -9,19 +9,7 @@ from bpmn.bpmn_elements import Element, Participant
 
 
 def generate_id(prefix: str) -> str:
-    """Утилита, которая генерирует случайный ID с заданным префиксом
-
-    Параметры
-    ----------
-    prefix: str
-        Префикс идентификатора
-
-    Возвращает
-    -------
-    str
-        Случайный ID с заданным префиксом
-    """
-
+    """Генерирует случайный ID вида prefix_xxxxxxx."""
     alphanumeric_str = "".join(
         random.choice(string.ascii_lowercase + string.digits) for _ in range(7)
     )
@@ -31,22 +19,7 @@ def generate_id(prefix: str) -> str:
 def get_nearest_element(
     center: List[int], elements: List[Union[Element, Participant]]
 ) -> Union[Element, Participant]:
-    """Утилита, которая по списку элементов и желаемому центру возвращает ближайший элемент
-
-
-    Параметры
-    ----------
-    center: List[int]
-        Кортеж с координатами желаемого центра
-    elements: List[Union[Element, Participant]]
-        Список объектов, рассматриваемых для поиска ближайшего элемента
-
-    Возвращает
-    -------
-    Union[Element, Participant]
-        Ближайший элемент к заданному центру
-    """
-
+    """Находит ближайший элемент к заданной точке center."""
     nearest = min(
         elements,
         key=lambda x: math.sqrt(
@@ -59,18 +32,7 @@ def get_nearest_element(
 
 
 def here(resource: str):
-    """Утилита, которая по относительному пути возвращает соответствующий абсолютный путь, независимо от окружения
-
-    Параметры
-    ----------
-    resource: str
-        Относительный путь к заданному ресурсу
-
-    Возвращает
-    -------
-    str
-        Абсолютный путь к заданному ресурсу
-    """
+    """Преобразует относительный путь в абсолютный относительно вызывающего файла."""
     stack = inspect.stack()
     caller_frame = stack[1][0]
     caller_module = inspect.getmodule(caller_frame)

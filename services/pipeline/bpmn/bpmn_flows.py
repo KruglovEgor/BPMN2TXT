@@ -4,15 +4,8 @@ from bpmn.predictions import KeyPointPrediction
 
 
 class Flow:
-    """Родительский класс для всех потоков, которые могут быть размещены в BPMN-диаграмме.
+    """Базовый класс для потоков BPMN (стрелок)."""
 
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор потока.
-    prediction : KeyPointPrediction
-        Предсказание, полученное от детектора ключевых точек.
-    """
     def __init__(
         self,
         id: str,
@@ -26,14 +19,14 @@ class Flow:
         self.targetRef = None
 
     def render_element(self):
-        """Возвращает XML-строку, связанную с этим типом потока"""
+        """Возвращает XML-строку потока."""
 
     def get_name(self):
-        """Возвращает текст потока в виде строки"""
+        """Возвращает текст потока."""
         return " ".join([text.text for text in self.name])
 
     def render_shape(self):
-        """Возвращает XML-строку с информацией о форме этого типа потока"""
+        """Возвращает XML-строку с информацией о форме потока."""
         template = """<bpmndi:BPMNEdge id="{{ element.id }}_di" bpmnElement="{{ element.id }}" >
         <di:waypoint x="{{ element.prediction.tail[0] }}" y="{{ element.prediction.tail[1] }}" />
         <di:waypoint x="{{ element.prediction.head[0] }}" y="{{ element.prediction.head[1] }}" />
@@ -46,15 +39,8 @@ class Flow:
 
 
 class SequenceFlow(Flow):
-    """Представляет последовательный поток BPMN.
+    """Последовательный поток BPMN."""
 
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор потока.
-    prediction : KeyPointPrediction
-        Предсказание, полученное от детектора ключевых точек.
-    """
     def __init__(
         self,
         id: str,
@@ -63,7 +49,7 @@ class SequenceFlow(Flow):
         super(SequenceFlow, self).__init__(id, prediction)
 
     def render_element(self):
-        """Возвращает XML-строку, связанную с последовательным потоком"""
+        """Возвращает XML последовательного потока."""
 
         template = """<bpmn:sequenceFlow id="{{ flow.id }}" name="{{ flow.get_name() }}" sourceRef="{{ flow.sourceRef }}" targetRef="{{ flow.targetRef }}" />"""
         render_template = self.jinja_environment.from_string(template)
@@ -73,15 +59,8 @@ class SequenceFlow(Flow):
 
 
 class MessageFlow(Flow):
-    """Представляет поток сообщений BPMN.
+    """Поток сообщений BPMN."""
 
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор потока.
-    prediction : KeyPointPrediction
-        Предсказание, полученное от детектора ключевых точек.
-    """
     def __init__(
         self,
         id: str,
@@ -90,7 +69,7 @@ class MessageFlow(Flow):
         super(MessageFlow, self).__init__(id, prediction)
 
     def render_element(self):
-        """Возвращает XML-строку, связанную с потоком сообщений"""
+        """Возвращает XML потока сообщений."""
 
         template = """<bpmn:messageFlow id="{{ flow.id }}" name="{{ flow.get_name() }}" sourceRef="{{ flow.sourceRef }}" targetRef="{{ flow.targetRef }}" />"""
         render_template = self.jinja_environment.from_string(template)

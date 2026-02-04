@@ -7,15 +7,7 @@ from bpmn.predictions import ObjectPrediction, Text
 
 
 class Element:
-    """Родительский класс для всех элементов, которые могут быть размещены в BPMN-процессе.
-
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор элемента BPMN.
-    prediction : ObjectPrediction
-        Предсказание, полученное от детектора объектов.
-    """
+    """Базовый класс для элементов BPMN-процесса."""
     def __init__(
         self,
         id: str,
@@ -29,14 +21,14 @@ class Element:
         self.outgoing = []
 
     def render_element(self):
-        """Возвращает XML-строку, связанную с этим типом элемента"""
+        """Возвращает XML-строку элемента."""
 
     def get_name(self):
-        """Возвращает текст элемента в виде строки"""
+        """Возвращает текст элемента."""
         return " ".join([text.text for text in self.name])
 
     def render_shape(self):
-        """Возвращает XML-строку с информацией о форме этого типа элемента"""
+        """Возвращает XML с информацией о форме элемента."""
         template = """<bpmndi:BPMNShape id="{{ element.id }}_di" bpmnElement="{{ element.id }}" >
         <dc:Bounds x="{{ element.prediction.top_left_x }}" y="{{ element.prediction.top_left_y }}" width="{{ element.prediction.width }}" height="{{ element.prediction.height }}" />
       </bpmndi:BPMNShape>
@@ -48,17 +40,7 @@ class Element:
 
 
 class StartEvent(Element):
-    """Представляет стартовое событие BPMN, которое может быть разных типов.
-
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор элемента BPMN.
-    prediction : ObjectPrediction
-        Предсказание, полученное от детектора объектов.
-    type : str, {'startEvent', 'messageEventDefinition', 'timerEventDefinition', 'signalEventDefinition'}
-        Тип стартового события.
-    """
+    """Стартовое событие BPMN."""
     def __init__(
         self,
         id: str,
@@ -84,17 +66,7 @@ class StartEvent(Element):
 
 
 class EndEvent(Element):
-    """Представляет конечное событие BPMN, которое может быть разных типов.
-
-        Параметры
-        ----------
-        id : str
-            Уникальный идентификатор элемента BPMN.
-        prediction : ObjectPrediction
-            Предсказание, полученное от детектора объектов.
-        type : str, {'endEvent', 'messageEventDefinition', 'errorEventDefinition', 'escalationEventDefinition', 'terminateEventDefinition'}
-            Тип конечного события.
-        """
+    """Конечное событие BPMN."""
     def __init__(self, id: str, prediction: ObjectPrediction, type: str):
         super(EndEvent, self).__init__(id, prediction)
         self.type = type
@@ -115,17 +87,7 @@ class EndEvent(Element):
 
 
 class IntermediateThrowEvent(Element):
-    """Представляет промежуточное событие генерации BPMN, которое может быть разных типов.
-
-        Параметры
-        ----------
-        id : str
-            Уникальный идентификатор элемента BPMN.
-        prediction : ObjectPrediction
-            Предсказание, полученное от детектора объектов.
-        type : str, {'intermediateThrowEvent', 'messageEventDefinition', 'escalationEventDefinition'}
-            Тип промежуточного события генерации.
-        """
+    """Промежуточное событие генерации BPMN."""
     def __init__(self, id: str, prediction: ObjectPrediction, type: str):
         super(IntermediateThrowEvent, self).__init__(id, prediction)
         self.type = type
@@ -146,17 +108,7 @@ class IntermediateThrowEvent(Element):
 
 
 class IntermediateCatchEvent(Element):
-    """Представляет промежуточное событие ожидания BPMN, которое может быть разных типов.
-
-        Параметры
-        ----------
-        id : str
-            Уникальный идентификатор элемента BPMN.
-        prediction : ObjectPrediction
-            Предсказание, полученное от детектора объектов.
-        type : str, {'messageEventDefinition', 'timerEventDefinition'}
-            Тип промежуточного события ожидания.
-        """
+    """Промежуточное событие ожидания BPMN."""
     def __init__(self, id: str, prediction: ObjectPrediction, type: str):
         super(IntermediateCatchEvent, self).__init__(id, prediction)
         self.type = type
@@ -174,17 +126,7 @@ class IntermediateCatchEvent(Element):
 
 
 class Gateway(Element):
-    """Представляет шлюз BPMN, который может быть разных типов.
-
-        Параметры
-        ----------
-        id : str
-            Уникальный идентификатор элемента BPMN.
-        prediction : ObjectPrediction
-            Предсказание, полученное от детектора объектов.
-        type : str, {'inclusiveGateway', 'parallelGateway', 'exclusiveGateway', 'eventBasedGateway', 'complexGateway'}
-            Тип шлюза.
-    """
+    """Шлюз BPMN."""
     def __init__(self, id: str, prediction: ObjectPrediction, type: str):
         super(Gateway, self).__init__(id, prediction)
         self.type = type
@@ -199,17 +141,7 @@ class Gateway(Element):
 
 
 class Task(Element):
-    """Представляет задачу BPMN, которая может быть разных типов.
-
-        Параметры
-        ----------
-        id : str
-            Уникальный идентификатор элемента BPMN.
-        prediction : ObjectPrediction
-            Предсказание, полученное от детектора объектов.
-        type : str, {'task', 'sendTask', 'subProcess', 'serviceTask', 'userTask'}
-            Тип задачи.
-    """
+    """Задача BPMN."""
     def __init__(self, id: str, prediction: ObjectPrediction, type: str):
         super(Task, self).__init__(id, prediction)
         self.type = type
@@ -224,15 +156,7 @@ class Task(Element):
 
 
 class TextAnnotation(Element):
-    """Представляет текстовую аннотацию BPMN.
-
-        Параметры
-        ----------
-        id : str
-            Уникальный идентификатор элемента BPMN.
-        prediction : ObjectPrediction
-            Предсказание, полученное от детектора объектов.
-    """
+    """Текстовая аннотация BPMN."""
     def __init__(self, id: str, prediction: ObjectPrediction, type: str):
         super(TextAnnotation, self).__init__(id, prediction)
         self.type = type
@@ -251,36 +175,14 @@ class TextAnnotation(Element):
 
 @dataclass()
 class Process:
-    """Представляет BPMN-процесс, содержащий элементы диаграммы BPMN.
-    Если существует участник, то для каждого из них будет создан отдельный процесс,
-    содержащий элементы, связанные с этим участником.
-
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор элемента BPMN.
-    elements : list of Element
-        Список элементов BPMN, содержащихся в этом процессе.
-    """
+    """Процесс BPMN, содержащий элементы диаграммы."""
     id: str
     elements: List[Element] = field(default_factory=lambda: [])
 
 
 @dataclass()
 class Participant:
-    """Представляет участника BPMN, который связан с одним и только одним процессом.
-
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор элемента BPMN.
-    prediction : ObjectPrediction
-        Предсказание, полученное от детектора объектов.
-    process : Process
-        Процесс, связанный с этим участником
-    name : list of Text
-        Текст в виде списка, связанный с участником.
-    """
+    """Участник BPMN (pool), связанный с одним процессом."""
     id: str
     prediction: ObjectPrediction
     process: Process
@@ -313,19 +215,7 @@ class Collaboration:
 
 @dataclass()
 class Diagram:
-    """Представляет диаграмму BPMN, содержащую всю информацию для записи XML-файла.
-
-    Параметры
-    ----------
-    id : str
-        Уникальный идентификатор элемента BPMN.
-    definition_id : str
-        Уникальный идентификатор тега определения BPMN.
-    processes : list of Process
-        Список процессов для включения в XML-файл.
-    collaboration : Collaboration
-        Объект сотрудничества для включения в XML-файл.
-    """
+    """BPMN-диаграмма со всеми процессами и элементами для генерации XML."""
     id: str
     definition_id: str
     processes: List[Process]

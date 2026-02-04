@@ -23,3 +23,7 @@ venv/
 *.bpmn
 services/pipeline/temp_files/*
 !services/pipeline/temp_files/.gitkeep
+
+# Detectron models
+services/pipeline/detectron_model/*
+!services/pipeline/detectron_model/.gitkeep

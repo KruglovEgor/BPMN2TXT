@@ -24,12 +24,12 @@ from commons.utils import (
 def calculate_width_height(
     x_start: float, y_start: float, x_end: float, y_end: float
 ) -> Tuple[float, float]:
-    """Возвращает ширину и высоту области по начальным и конечным координатам x и y."""
+    """Вычисляет ширину и высоту по координатам."""
     return abs(x_end - x_start), abs(y_end - y_start)
 
 
 def connect_participants(participant, elements):
-    """Возвращает все элементы, содержащиеся в участнике"""
+    """Находит элементы, полностью входящие в границы участника."""
 
     return list(
         filter(
@@ -43,8 +43,7 @@ def connect_participants(participant, elements):
 
 
 def extend_participants(processed_participants: Set[Participant]):
-    """Этот метод расширяет всех участников, у которых есть элементы за пределами их области.
-    Таким образом, расширенный участник будет включать эти элементы."""
+    """Расширяет границы участников, чтобы включить все их элементы."""
     for participant in processed_participants:
         elements = [
             el
@@ -71,12 +70,10 @@ def extend_participants(processed_participants: Set[Participant]):
 
 
 class DiagramFactory:
-    """Класс-фабрика для создания диаграммы на основе набора элементов, которые могут быть Element или Participant.
-    """
+    """Фабрика для создания BPMN-диаграммы из списка элементов."""
     @staticmethod
     def create_element(elements: List[Union[Element, Participant]]) -> Diagram:
-        """Фабричный метод, который создаёт диаграмму из набора элементов, которые могут быть
-        объектами Element или Participant. """
+        """Создаёт диаграмму из элементов и участников."""
         def get_elem_types(wanted_type, elem_list):
             return [elem for elem in elem_list if isinstance(elem, wanted_type)]
 
@@ -142,32 +139,22 @@ class DiagramFactory:
 
 
 class BPMNFactory:
-    """Родительский класс для фабрик, используемых для создания элементов BPMN, которые могут быть объектами
-    Element или Participant. """
+    """Базовый класс для фабрик создания BPMN-элементов."""
     generated_ids = []
 
     def create_element(self, prediction: ObjectPrediction) -> Union[Element, Participant]:
-        """Возвращает элемент BPMN, связанный с фабрикой"""
+        """Создаёт элемент BPMN."""
 
 
 class GenericElementFactory(BPMNFactory):
-    """Универсальная фабрика для объектов Element, которая создаёт выбранный Element, извлекая информацию
-    об области, текст и ID.
-
-    Параметры
-    ----------
-    element_class : type of Element
-        Фактический класс Element для создания.
-    element_type : str
-        Параметр типа для передачи при создании Element.
-    """
+    """Универсальная фабрика для создания элементов указанного класса."""
 
     def __init__(self, element_class: type(Element), element_type: str):
         self.element_class = element_class
         self.element_type = element_type
 
     def create_element(self, prediction: ObjectPrediction) -> Element:
-        """Возвращает выбранный элемент BPMN, созданный фабрикой"""
+        """Создаёт элемент BPMN указанного класса."""
         while (True):
             id = generate_id(self.element_class.__name__)
 
@@ -180,11 +167,10 @@ class GenericElementFactory(BPMNFactory):
 
 
 class ParticipantFactory(BPMNFactory):
-    """Фабрика для объектов Participant, которая создаёт Participant, извлекая информацию об области,
-    текст и ID. """
+    """Фабрика для создания участников BPMN."""
 
     def create_element(self, prediction: ObjectPrediction) -> Participant:
-        """Возвращает участника BPMN. """
+        """Создаёт участника BPMN с привязанным процессом."""
         id = generate_id("Participant")
         processRef = generate_id("Process")
         self.generated_ids.extend([id, processRef])
@@ -268,6 +254,6 @@ FACTORIES = {
 
 
 def get_factory(category_id: int) -> BPMNFactory:
-    """Возвращает фабрику для создания элемента, None если категория недоступна."""
+    """Возвращает фабрику элементов по ID категории или None."""
     category = CATEGORIES.get(category_id)
     return FACTORIES.get(category)

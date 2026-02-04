@@ -4,8 +4,7 @@ from commons.utils import generate_id
 
 
 class FlowFactory:
-    """Родительский класс для фабрик, используемых для создания потоков BPMN, которые могут быть
-    объектами SequenceFlow или MessageFlow. """
+    """Базовый класс для фабрик создания BPMN-потоков (SequenceFlow, MessageFlow)."""
     generated_ids = []
 
     def create_flow(self, prediction: KeyPointPrediction):
@@ -13,14 +12,8 @@ class FlowFactory:
 
 
 class GenericFlowFactory(FlowFactory):
-    """Универсальная фабрика для объектов Flow, которая создаёт выбранный Flow, извлекая информацию
-    об области, текст и ID.
+    """Универсальная фабрика для создания потоков указанного класса."""
 
-    Параметры
-    ----------
-    flow_class : type of Flow
-        Фактический подкласс Flow для создания.
-    """
     def __init__(self, flow_class: type(Flow)):
         self.flow_class = flow_class
 
@@ -48,6 +41,6 @@ KEYPOINT_FACTORIES = {
 
 
 def get_keypoint_factory(category_id: int) -> FlowFactory:
-    """Возвращает фабрику ключевых точек для создания потока, None если категория недоступна."""
+    """Возвращает фабрику потоков по ID категории или None."""
     category = KEYPOINT_CATEGORIES.get(category_id)
     return KEYPOINT_FACTORIES.get(category)

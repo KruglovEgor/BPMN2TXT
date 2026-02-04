@@ -15,18 +15,7 @@ if TYPE_CHECKING:
 
 
 def convert_object_predictions(predictions: List["ObjectPrediction"]):
-    """Метод, который преобразует предсказания обнаруженных объектов BPMN в элементы
-
-    Параметры
-    ----------
-    predictions: List[ObjectPrediction]
-        Список предсказаний ObjectPrediction
-
-    Возвращает
-    -------
-    List[Element]
-        Список преобразованных элементов BPMN
-    """
+    """Преобразует предсказания в BPMN-элементы."""
 
     elements = []
     for prediction in predictions:
@@ -40,18 +29,7 @@ def convert_object_predictions(predictions: List["ObjectPrediction"]):
 
 
 def render_diagram(bpmn_diagram: Diagram):
-    """Метод, который преобразует класс Diagram в итоговую BPMN-строку
-
-    Параметры
-    ----------
-    bpmn_diagram: Diagram
-        Объект Diagram
-
-    Возвращает
-    -------
-    str
-        Строка, представляющая итоговую BPMN-модель
-    """
+    """Рендерит диаграмму в BPMN XML-строку."""
 
     template_loader = jinja2.FileSystemLoader(
         searchpath=here("../../commons/templates/")
@@ -65,18 +43,7 @@ def render_diagram(bpmn_diagram: Diagram):
 
 
 def convert_keypoint_prediction(predictions: List["KeyPointPrediction"]):
-    """Метод, который преобразует предсказания ключевых точек в потоки
-
-    Параметры
-    ----------
-    predictions: List[KeyPointPrediction]
-        Список предсказаний KeyPointPrediction
-
-    Возвращает
-    -------
-    List[Flow]
-        Список преобразованных потоков BPMN
-    """
+    """Преобразует предсказания ключевых точек в BPMN-потоки."""
 
     flows = []
     for prediction in predictions:
@@ -90,21 +57,7 @@ def convert_keypoint_prediction(predictions: List["KeyPointPrediction"]):
 
 
 def link_flows(flows: List[Flow], elements: List[Element]):
-    """Метод, который связывает потоки с соответствующими элементами
-
-    Параметры
-    ----------
-    flows: List[Flow]
-        Список обнаруженных потоков
-    elements: List[Element}
-        Список элементов для связывания
-
-    Возвращает
-    -------
-    tuple: tuple[List[Element], List[Flow]]
-        Список обновлённых элементов и потоков
-
-    """
+    """Привязывает потоки к ближайшим элементам (source/target)."""
 
     # try to find a better way to link them
     for flow in flows:
