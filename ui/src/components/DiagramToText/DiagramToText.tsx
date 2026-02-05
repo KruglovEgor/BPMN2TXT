@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import ScreenshotUpload from './ScreenshotUpload';
 import { diagramToText } from '../../api/gateway';
 
@@ -30,7 +32,11 @@ const DiagramToText: React.FC = () => {
             {description && (
                 <div className="result-box">
                     <h3>Text Description:</h3>
-                    <p>{description}</p>
+                    <div className="markdown-content">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {description}
+                        </ReactMarkdown>
+                    </div>
                 </div>
             )}
         </div>
