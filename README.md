@@ -1,5 +1,11 @@
 # BPMN2TXT
 
+## Быстрый старт (сборка всех сервисов и запуск (llm на GPU))
+
+```bash
+docker compose --profile gpu up --build gateway llm-gpu ui pipeline
+```
+
 ## Запуск через Docker Compose
 
 В корневом [docker-compose.yml](docker-compose.yml) объявлены все сервисы.
