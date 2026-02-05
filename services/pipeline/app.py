@@ -1,5 +1,6 @@
 from commons.utils import here
 from api.resources.convert_resource import convert_image
+from api.resources.metrics_resource import get_metrics
 from fastapi.responses import PlainTextResponse
 from starlette.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +27,12 @@ def create_app():
         description='Принимает изображение и возвращает BPMN в формате XML.',
         response_class=PlainTextResponse
     )(convert_image)
+
+    app.get(
+        '/api/v1/metrics',
+        summary='Метрики использования ресурсов',
+        description='Возвращает метрики CPU, RAM и диска для контейнера.'
+    )(get_metrics)
 
     static_files_folder = here("static")
     if os.path.exists(static_files_folder) and os.path.isdir(static_files_folder):

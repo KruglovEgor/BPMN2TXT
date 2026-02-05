@@ -27,6 +27,11 @@ ALLOWED_EXTENSIONS = {'.png', '.jpg',
                       '.jpeg', '.bmp', '.tiff', '.tif', '.webp'}
 
 
+def _elapsed_ms(start_time: float) -> float:
+    """Возвращает прошедшее время в миллисекундах от переданного момента."""
+    return round((time.perf_counter() - start_time) * 1000, 3)
+
+
 async def convert_image(image: UploadFile = File(...)):
     """Обрабатывает POST-запрос на конвертацию изображения в структурированный JSON.
 
@@ -34,10 +39,15 @@ async def convert_image(image: UploadFile = File(...)):
     Возвращает JSON с распознанными элементами диаграммы для последующей обработки LLM.
     """
 
+    request_start = time.perf_counter()
+
     try:
         if image is None or not image.filename:
             return JSONResponse(
-                content={"error": "Имя файла отсутствует"},
+                content={
+                    "error": "Имя файла отсутствует",
+                    "processing_time_ms": _elapsed_ms(request_start)
+                },
                 status_code=400
             )
 
@@ -47,7 +57,8 @@ async def convert_image(image: UploadFile = File(...)):
         if f'.{file_ext}' not in ALLOWED_EXTENSIONS:
             return JSONResponse(
                 content={
-                    "error": f"Недопустимый формат файла. Разрешены: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+                    "error": f"Недопустимый формат файла. Разрешены: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+                    "processing_time_ms": _elapsed_ms(request_start)
                 },
                 status_code=400
             )
@@ -62,7 +73,12 @@ async def convert_image(image: UploadFile = File(...)):
         ocr_img, predict_img = ss.get_ocr_and_predict_images(path)
 
         if ocr_img is None or predict_img is None:
-            return PlainTextResponse(content=sample_bpmn, status_code=200)
+            return PlainTextResponse(
+                content=sample_bpmn,
+                status_code=200,
+                headers={
+                    "X-Processing-Time-Ms": str(_elapsed_ms(request_start))}
+            )
 
         # Параллельный запуск всех моделей
         loop = asyncio.get_event_loop()
@@ -93,8 +109,12 @@ async def convert_image(image: UploadFile = File(...)):
 
         # Преобразуем в структурированный JSON для LLM
         diagram_json = cs.elements_to_json(elements)
-        
-        return JSONResponse(content=diagram_json, status_code=200)
+        response_payload = {
+            **diagram_json,
+            "processing_time_ms": _elapsed_ms(request_start)
+        }
+
+        return JSONResponse(content=response_payload, status_code=200)
 
         # DEPRECATED: Генерация BPMN XML - оставлено для справки
         # bpmn_diagram = DiagramFactory.create_element(elements)
@@ -103,16 +123,25 @@ async def convert_image(image: UploadFile = File(...)):
 
     except ValueError as e:
         return JSONResponse(
-            content={"error": f"Ошибка значения: {str(e)}"},
+            content={
+                "error": f"Ошибка значения: {str(e)}",
+                "processing_time_ms": _elapsed_ms(request_start)
+            },
             status_code=400
         )
     except FileNotFoundError as e:
         return JSONResponse(
-            content={"error": f"Ошибка при работе с файлом: {str(e)}"},
+            content={
+                "error": f"Ошибка при работе с файлом: {str(e)}",
+                "processing_time_ms": _elapsed_ms(request_start)
+            },
             status_code=500
         )
     except Exception as e:
         return JSONResponse(
-            content={"error": f"Внутренняя ошибка сервера: {str(e)}"},
+            content={
+                "error": f"Внутренняя ошибка сервера: {str(e)}",
+                "processing_time_ms": _elapsed_ms(request_start)
+            },
             status_code=500
         )
