@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { getDiagramCode } from '../../mocks/textToDiagramMock';
+import { textToDiagram } from '../../api/gateway';
 import DiagramViewer from './DiagramViewer';
 
 const TextToDiagram: React.FC = () => {
     const [description, setDescription] = useState('');
     const [diagramCode, setDiagramCode] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
     const handleDescriptionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         setDescription(event.target.value);
@@ -12,8 +13,14 @@ const TextToDiagram: React.FC = () => {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const code = await getDiagramCode(description);
-        setDiagramCode(code);
+        setError(null);
+        setDiagramCode('');
+        try {
+            const result = await textToDiagram(description);
+            setDiagramCode(result.diagramCode);
+        } catch (err) {
+            setError('Failed to generate diagram.');
+        }
     };
 
     return (
@@ -31,6 +38,12 @@ const TextToDiagram: React.FC = () => {
                     <button type="submit" className="generate-btn">Generate</button>
                 </div>
             </form>
+            {error && (
+                <div className="result-box">
+                    <h3>Error:</h3>
+                    <p>{error}</p>
+                </div>
+            )}
             {diagramCode && (
                 <div className="result-box">
                     <h3>Generated Diagram:</h3>
