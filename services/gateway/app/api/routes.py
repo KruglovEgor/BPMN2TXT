@@ -30,9 +30,9 @@ async def health() -> Dict[str, str]:
 )
 async def diagram_to_text(image: UploadFile = File(...)) -> DiagramToTextResponse:
     pipeline_payload = await call_pipeline(image)
-    prompt = settings.prompt_bpmn_to_text.format(
-        payload=json.dumps(pipeline_payload, ensure_ascii=False)
-    )
+    prompt_payload = json.dumps(pipeline_payload, ensure_ascii=False)
+    # Replace only the explicit placeholder to avoid KeyError from other braces in the template.
+    prompt = settings.prompt_bpmn_to_text.replace("{payload}", prompt_payload)
     description = await call_llm(prompt)
     return DiagramToTextResponse(description=description, pipeline=pipeline_payload)
 
@@ -48,7 +48,7 @@ async def text_to_diagram(payload: TextToDiagramRequest) -> TextToDiagramRespons
     if not description:
         raise HTTPException(status_code=400, detail="Description is required.")
 
-    prompt = settings.prompt_text_to_mermaid.format(description=description)
+    prompt = settings.prompt_text_to_mermaid.replace("{description}", description)
     diagram_code = await call_llm(prompt)
     diagram_code = extract_code_block(diagram_code)
     return TextToDiagramResponse(diagramCode=diagram_code)
