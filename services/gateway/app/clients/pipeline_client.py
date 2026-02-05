@@ -4,6 +4,7 @@ import httpx
 from fastapi import HTTPException, UploadFile
 
 from app.core.config import settings
+from app.services.pipeline_normalizer import normalize_pipeline_payload
 
 
 async def call_pipeline(image: UploadFile) -> Dict[str, Any]:
@@ -32,4 +33,4 @@ async def call_pipeline(image: UploadFile) -> Dict[str, Any]:
     if not isinstance(payload, dict):
         raise HTTPException(status_code=502, detail="Pipeline JSON must be an object.")
 
-    return payload
+    return normalize_pipeline_payload(payload)

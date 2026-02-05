@@ -31,7 +31,7 @@ async def health() -> Dict[str, str]:
 async def diagram_to_text(image: UploadFile = File(...)) -> DiagramToTextResponse:
     pipeline_payload = await call_pipeline(image)
     prompt = settings.prompt_bpmn_to_text.format(
-        payload=json.dumps(pipeline_payload, ensure_ascii=True)
+        payload=json.dumps(pipeline_payload, ensure_ascii=False)
     )
     description = await call_llm(prompt)
     return DiagramToTextResponse(description=description, pipeline=pipeline_payload)
