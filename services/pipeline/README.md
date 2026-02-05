@@ -1,4 +1,4 @@
-# BPMN2TXT (pipeline processing backend)
+# BPMN2TXT (pipeline processing)
 
 "Этот раздел содержит код сервиса для распознавания изображений BPMN диаграмм и преобразования в BPMN код.
 

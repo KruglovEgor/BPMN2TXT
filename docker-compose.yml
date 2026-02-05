@@ -1,5 +1,5 @@
 services:
-  backend:
+  pipeline:
     build:
       context: ./services/pipeline
       dockerfile: Dockerfile
