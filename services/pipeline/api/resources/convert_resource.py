@@ -5,7 +5,8 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import UploadFile, File
 from starlette.responses import PlainTextResponse, JSONResponse
-from bpmn.element_factories import DiagramFactory
+# DEPRECATED: Импорт DiagramFactory оставлен для возможности генерации BPMN XML
+# from bpmn.element_factories import DiagramFactory
 from api.services import (
     predict_service as ps,
     ocr_service as ocr,
@@ -27,9 +28,10 @@ ALLOWED_EXTENSIONS = {'.png', '.jpg',
 
 
 async def convert_image(image: UploadFile = File(...)):
-    """Обрабатывает POST-запрос на конвертацию изображения в BPMN-модель.
+    """Обрабатывает POST-запрос на конвертацию изображения в структурированный JSON.
 
     Пайплайн выполняется с параллельным запуском всех моделей.
+    Возвращает JSON с распознанными элементами диаграммы для последующей обработки LLM.
     """
 
     try:
@@ -89,10 +91,15 @@ async def convert_image(image: UploadFile = File(...)):
         elements.extend(flows)
         ocr.link_text(text, elements)
 
-        bpmn_diagram = DiagramFactory.create_element(elements)
-        rendered_bpmn_model = cs.render_diagram(bpmn_diagram)
+        # Преобразуем в структурированный JSON для LLM
+        diagram_json = cs.elements_to_json(elements)
+        
+        return JSONResponse(content=diagram_json, status_code=200)
 
-        return PlainTextResponse(content=rendered_bpmn_model, status_code=200)
+        # DEPRECATED: Генерация BPMN XML - оставлено для справки
+        # bpmn_diagram = DiagramFactory.create_element(elements)
+        # rendered_bpmn_model = cs.render_diagram(bpmn_diagram)
+        # return PlainTextResponse(content=rendered_bpmn_model, status_code=200)
 
     except ValueError as e:
         return JSONResponse(
