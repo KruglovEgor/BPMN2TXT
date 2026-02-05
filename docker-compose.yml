@@ -1,4 +1,22 @@
 services:
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    ports:
+      - "${GATEWAY_PORT:-7000}:7000"
+    env_file:
+      - ./.env
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "${UI_PORT:-3000}:3000"
+    environment:
+      - REACT_APP_API_BASE=http://localhost:7000
+
   pipeline:
     build:
       context: ./services/pipeline
@@ -41,12 +59,12 @@ services:
         condition: service_completed_successfully
     gpus: all
     ports:
-      - "${GPU_HOST_PORT:-8000}:8000"
+      - "${GPU_HOST_PORT:-8001}:8001"
     volumes:
       - ./services/llm/models:/models
     command: >
       -m ${MODEL_PATH:-/models/model.gguf}
-      --host 0.0.0.0 --port 8000
+      --host 0.0.0.0 --port 8001
       --ctx-size ${GPU_CTX_SIZE:-4096}
       --threads ${GPU_THREADS:-6}
       --n-gpu-layers ${N_GPU_LAYERS:-999}
