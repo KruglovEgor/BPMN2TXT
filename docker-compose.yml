@@ -1,5 +1,5 @@
 services:
-  backend:
+  pipeline:
     build:
       context: ./services/pipeline
       dockerfile: Dockerfile
@@ -9,3 +9,66 @@ services:
       - ./services/pipeline:/app
     environment:
       - PYTHONUNBUFFERED=1
+
+  model-init:
+    profiles: ["cpu", "gpu"]
+    image: curlimages/curl:8.12.1
+    volumes:
+      - ./services/llm/models:/models
+    environment:
+      MODEL_PATH: ${MODEL_PATH:-/models/model.gguf}
+      HF_MODEL_URL: ${HF_MODEL_URL}
+    command: >
+      sh -lc '
+        set -e;
+        mkdir -p "$(dirname "${MODEL_PATH}")";
+        if [ ! -s "${MODEL_PATH}" ]; then
+          echo "[model-init] downloading to ${MODEL_PATH}";
+          curl -L --fail --retry 5 --retry-delay 2 -o "${MODEL_PATH}.part" "${HF_MODEL_URL}";
+          mv "${MODEL_PATH}.part" "${MODEL_PATH}";
+          echo "[model-init] done";
+        else
+          echo "[model-init] model already exists: ${MODEL_PATH}";
+        fi
+      '
+    restart: "no"
+
+  llm-gpu:
+    profiles: ["gpu"]
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    depends_on:
+      model-init:
+        condition: service_completed_successfully
+    gpus: all
+    ports:
+      - "${GPU_HOST_PORT:-8000}:8000"
+    volumes:
+      - ./services/llm/models:/models
+    command: >
+      -m ${MODEL_PATH:-/models/model.gguf}
+      --host 0.0.0.0 --port 8000
+      --ctx-size ${GPU_CTX_SIZE:-4096}
+      --threads ${GPU_THREADS:-6}
+      --n-gpu-layers ${N_GPU_LAYERS:-999}
+      -n ${N_PREDICT:-512}
+      ${GPU_EXTRA_ARGS:-}
+    restart: unless-stopped
+
+  llm-cpu:
+    profiles: ["cpu"]
+    image: ghcr.io/ggml-org/llama.cpp:server
+    depends_on:
+      model-init:
+        condition: service_completed_successfully
+    ports:
+      - "${CPU_HOST_PORT:-8000}:8000"
+    volumes:
+      - ./services/llm/models:/models
+    command: >
+      -m ${MODEL_PATH:-/models/model.gguf}
+      --host 0.0.0.0 --port 8000
+      --ctx-size ${CPU_CTX_SIZE:-4096}
+      --threads ${CPU_THREADS:-6}
+      -n ${N_PREDICT:-512}
+      ${CPU_EXTRA_ARGS:-}
+    restart: unless-stopped
