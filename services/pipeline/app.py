@@ -23,8 +23,8 @@ def create_app():
 
     app.post(
         '/api/v1/convert',
-        summary='Конвертация изображения в BPMN',
-        description='Принимает изображение и возвращает BPMN в формате XML.',
+        summary='Конвертация изображения в JSON описание',
+        description='Принимает изображение и возвращает JSON описание процесса.',
         response_class=PlainTextResponse
     )(convert_image)
 
