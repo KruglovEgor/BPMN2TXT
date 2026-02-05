@@ -1,10 +1,10 @@
 services:
-  gateway:
+  backend:
     build:
-      context: ./services/gateway
+      context: ./services/backend
       dockerfile: Dockerfile
     ports:
-      - "${GATEWAY_PORT:-7000}:7000"
+      - "${BACKEND_PORT:-7000}:7000"
     env_file:
       - ./.env
 

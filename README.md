@@ -3,7 +3,7 @@
 ## Быстрый старт (сборка всех сервисов и запуск (llm на GPU))
 
 ```bash
-docker compose --profile gpu up --build gateway llm-gpu ui pipeline
+docker compose --profile gpu up --build backend llm-gpu ui pipeline
 ```
 
 ## Запуск через Docker Compose

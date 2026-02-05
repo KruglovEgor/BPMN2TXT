@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { textToDiagram } from '../../api/gateway';
+import { textToDiagram } from '../../api/backend';
 import DiagramViewer from './DiagramViewer';
 
 const TextToDiagram: React.FC = () => {

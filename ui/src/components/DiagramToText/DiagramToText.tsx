@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ScreenshotUpload from './ScreenshotUpload';
-import { diagramToText } from '../../api/gateway';
+import { diagramToText } from '../../api/backend';
 
 const DiagramToText: React.FC = () => {
     const [description, setDescription] = useState<string | null>(null);
